@@ -2637,7 +2637,11 @@ export namespace SdkMetric {
         VIDEO_DISCARDED_PPS = 47,
         VIDEO_PLIS_SENT = 48,
         VIDEO_RECEIVED_JITTER_MS = 49,
+        VIDEO_INPUT_HEIGHT  = 60,
+        VIDEO_INPUT_ASPECT_RATIO = 61,
         VIDEO_SENT_QP_SUM = 66,
+        VIDEO_DECODE_HEIGHT=69,
+        VIDEO_DECODE_ASPECT_RATIO =70,
         VIDEO_RECEIVED_QP_SUM = 72
     }
 }

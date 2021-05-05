@@ -8,6 +8,7 @@ import Direction from './ClientMetricReportDirection';
 import MediaType from './ClientMetricReportMediaType';
 import GlobalMetricReport from './GlobalMetricReport';
 import StreamMetricReport from './StreamMetricReport';
+import MetricReport from './MetricReport';
 
 export default class DefaultClientMetricReport implements ClientMetricReport {
   globalMetricReport: GlobalMetricReport = new GlobalMetricReport();
@@ -15,6 +16,7 @@ export default class DefaultClientMetricReport implements ClientMetricReport {
   currentTimestampMs: number = 0;
   previousTimestampMs: number = 0;
   currentSsrcs: { [id: number]: number } = {};
+  videoUpstreamMetrics: { [key: string]: MetricReport } = {};
 
   constructor(private logger: Logger) {}
 
@@ -238,6 +240,8 @@ export default class DefaultClientMetricReport implements ClientMetricReport {
     bytesSent: { transform: this.bitsPerSecond, type: SdkMetric.Type.VIDEO_SENT_BITRATE },
     droppedFrames: { transform: this.countPerSecond, type: SdkMetric.Type.VIDEO_DROPPED_FPS },
     qpSum: { transform: this.countPerSecond, type: SdkMetric.Type.VIDEO_SENT_QP_SUM },
+    frameHeight: { transform: this.identityValue, type: SdkMetric.Type.VIDEO_INPUT_HEIGHT },
+    frameAspectRatio: { transform: this.identityValue, type: SdkMetric.Type.VIDEO_INPUT_ASPECT_RATIO },
   };
 
   readonly videoDownstreamMetricMap: {
@@ -297,6 +301,8 @@ export default class DefaultClientMetricReport implements ClientMetricReport {
       transform: this.countPerSecond,
       type: SdkMetric.Type.VIDEO_RECEIVED_QP_SUM,
     },
+    frameHeight: { transform: this.identityValue, type: SdkMetric.Type.VIDEO_DECODE_HEIGHT },
+    frameAspectRatio: { transform: this.identityValue, type: SdkMetric.Type.VIDEO_DECODE_ASPECT_RATIO  },
   };
 
   getMetricMap(
@@ -328,6 +334,89 @@ export default class DefaultClientMetricReport implements ClientMetricReport {
         return this.globalMetricMap;
     }
   }
+
+  /**
+   *  media Stream metrics
+   */
+
+     readonly mediaStreamMetricSpec: {
+      [id: string]: {
+        source: string;
+        media?: MediaType;
+        dir?: Direction;
+      };
+    } = {
+      videoUpstreamBitrate: { 
+        source: 'bytesSent', 
+        media: MediaType.VIDEO, 
+        dir: Direction.UPSTREAM 
+      },
+      videoUpstreamPacketsSent: {
+        source: 'packetsSent',
+        media: MediaType.VIDEO,
+        dir: Direction.UPSTREAM,
+      },
+      videoUpstreamFramesEncodedPerSecond: {
+        source: 'framesEncoded',
+        media: MediaType.VIDEO,
+        dir: Direction.UPSTREAM,
+      },
+      videoUpstreamFrameHeight: {
+        source: 'frameHeight',
+        media: MediaType.VIDEO,
+        dir: Direction.UPSTREAM,
+      },
+      videoUpstreamFrameAspectRatio: {
+        source: 'frameAspectRatio',
+        media: MediaType.VIDEO,
+        dir: Direction.UPSTREAM,
+      },
+      videoDownstreamBitrate: { 
+        source: 'bytesReceived', 
+        media: MediaType.VIDEO, 
+        dir: Direction.DOWNSTREAM 
+      },
+      videoDownstreamPacketLossPercent: {
+        source: 'packetsLost',
+        media: MediaType.VIDEO,
+        dir: Direction.DOWNSTREAM,
+      },
+      videoDownstreamFramesDecodedPerSecond: {
+        source: 'framesDecoded',
+        media: MediaType.VIDEO,
+        dir: Direction.DOWNSTREAM,
+      },
+      videoDownstreamFrameHeight: {
+        source: 'frameHeight',
+        media: MediaType.VIDEO,
+        dir: Direction.DOWNSTREAM,
+      },
+      videoDownstreamFrameAspectRatio: {
+        source: 'frameAspectRatio',
+        media: MediaType.VIDEO,
+        dir: Direction.DOWNSTREAM,
+      },
+      audioPacketsReceived: {
+        source: 'packetsReceived',
+        media: MediaType.AUDIO,
+        dir: Direction.DOWNSTREAM,
+      },
+      audioPacketsLost: {
+        source: 'packetsLost',
+        media: MediaType.AUDIO,
+        dir: Direction.DOWNSTREAM,
+      },
+      audioPacketsSent: {
+        source: 'packetsSent',
+        media: MediaType.AUDIO,
+        dir: Direction.UPSTREAM,
+      },
+      audioPacketLossPercent: {
+        source: 'packetsLost',
+        media: MediaType.AUDIO,
+        dir: Direction.UPSTREAM,
+      },
+    };
 
   /**
    * Observable metrics and related APIs
@@ -410,12 +499,64 @@ export default class DefaultClientMetricReport implements ClientMetricReport {
     return 0;
   }
 
+  getMediaStreamMetricValue(metricName: string, ssrcNum: number): number {
+    const mediaStreamMetricSpec = this.mediaStreamMetricSpec[metricName];
+    const metricMap = this.getMetricMap(mediaStreamMetricSpec.media, mediaStreamMetricSpec.dir);
+    const metricSpec = metricMap[mediaStreamMetricSpec.source];
+    const transform = metricSpec.transform;
+    const source = metricSpec.source;
+    if (mediaStreamMetricSpec.hasOwnProperty('media')) {
+      const streamMetricReport = this.streamMetricReports[ssrcNum];
+      if (mediaStreamMetricSpec.source in streamMetricReport.currentMetrics) {
+        return source
+            ? transform(source, Number(ssrcNum))
+            : transform(mediaStreamMetricSpec.source, Number(ssrcNum));
+      }
+    } else {
+      return source ? transform(source) : transform(mediaStreamMetricSpec.source);
+    }
+    return 0;
+  }
+
+
   getObservableMetrics(): { [id: string]: number } {
     const metric: { [id: string]: number } = {};
     for (const metricName in this.observableMetricSpec) {
       metric[metricName] = this.getObservableMetricValue(metricName);
     }
     return metric;
+  }
+
+  getVideoUpstreamMetrics(): { [id: string]: MetricReport } {
+    return this.getMediaStreamMetrics(Direction.UPSTREAM, MediaType.VIDEO);
+  }
+
+  getVideoDownstreamMetrics(): { [id: string]: MetricReport } {
+    return this.getMediaStreamMetrics(Direction.DOWNSTREAM, MediaType.VIDEO);
+  }
+
+  getAudioUpstreamMetrics(): { [id: string]: MetricReport } {
+    return this.getMediaStreamMetrics(Direction.UPSTREAM, MediaType.AUDIO);
+  }
+
+  getAudioDownstreamMetrics(): { [id: string]: MetricReport } {
+    return this.getMediaStreamMetrics(Direction.DOWNSTREAM, MediaType.AUDIO);
+  }
+
+  getMediaStreamMetrics(direction: number, mediaType: number): { [id: string]: MetricReport } {
+    const mediaStreamMetrics: { [key: string]: MetricReport } = {};
+    for (const ssrc in this.streamMetricReports) {
+      if (this.streamMetricReports[ssrc].direction === direction && this.streamMetricReports[ssrc].mediaType === mediaType) {
+        const metric: { [id: string]: number } = {};
+        for (const metricName in this.mediaStreamMetricSpec) {
+          if (this.mediaStreamMetricSpec[metricName].dir === direction && this.mediaStreamMetricSpec[metricName].media === mediaType) {
+            metric[metricName] = this.getMediaStreamMetricValue(metricName, Number(ssrc));
+          }
+        }
+        mediaStreamMetrics[ssrc] = metric;
+      }
+    }
+    return mediaStreamMetrics;
   }
 
   /**

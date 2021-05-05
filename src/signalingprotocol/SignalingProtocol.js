@@ -6450,7 +6450,11 @@ $root.SdkMetric = (function() {
             case 47:
             case 48:
             case 49:
+            case 60:
+            case 61:
             case 66:
+            case 69:
+            case 70:
             case 72:
                 break;
             }
@@ -6669,10 +6673,26 @@ $root.SdkMetric = (function() {
         case 49:
             message.type = 49;
             break;
+        case "VIDEO_INPUT_HEIGHT":
+        case 60:
+            message.type = 60;
+            break;
+        case "VIDEO_INPUT_ASPECT_RATIO ":
+        case 61:
+            message.type = 61;
+            break;
         case "VIDEO_SENT_QP_SUM":
         case 66:
             message.type = 66;
             break;
+        case "VIDEO_DECODE_HEIGHT":
+        case 69:
+            message.type = 69;
+            break;
+        case "VIDEO_DECODE_ASPECT_RATIO":
+        case 70:
+            message.type = 70;
+            break;    
         case "VIDEO_RECEIVED_QP_SUM":
         case 72:
             message.type = 72;
@@ -6771,7 +6791,11 @@ $root.SdkMetric = (function() {
      * @property {number} VIDEO_DISCARDED_PPS=47 VIDEO_DISCARDED_PPS value
      * @property {number} VIDEO_PLIS_SENT=48 VIDEO_PLIS_SENT value
      * @property {number} VIDEO_RECEIVED_JITTER_MS=49 VIDEO_RECEIVED_JITTER_MS value
+     * @property {number} VIDEO_INPUT_HEIGHT =60 VIDEO_INPUT_HEIGHT value
+     * @property {number} VIDEO_INPUT_ASPECT_RATIO=61 VIDEO_INPUT_ASPECT_RATIO value
      * @property {number} VIDEO_SENT_QP_SUM=66 VIDEO_SENT_QP_SUM value
+     * @property {number} VIDEO_DECODE_HEIGHT=69 VIDEO_DECODE_HEIGHT value
+     * @property {number} VIDEO_DECODE_ASPECT_RATIO=70 VIDEO_DECODE_ASPECT_RATIO value
      * @property {number} VIDEO_RECEIVED_QP_SUM=72 VIDEO_RECEIVED_QP_SUM value
      */
     SdkMetric.Type = (function() {
@@ -6825,7 +6849,11 @@ $root.SdkMetric = (function() {
         values[valuesById[47] = "VIDEO_DISCARDED_PPS"] = 47;
         values[valuesById[48] = "VIDEO_PLIS_SENT"] = 48;
         values[valuesById[49] = "VIDEO_RECEIVED_JITTER_MS"] = 49;
+        values[valuesById[60] = "VIDEO_INPUT_HEIGHT"] = 60;
+        values[valuesById[61] = "VIDEO_INPUT_ASPECT_RATIO"] = 61;
         values[valuesById[66] = "VIDEO_SENT_QP_SUM"] = 66;
+        values[valuesById[69] = "VIDEO_DECODE_HEIGHT"] = 69;
+        values[valuesById[70] = "VIDEO_DECODE_ASPECT_RATIO"] = 70;
         values[valuesById[72] = "VIDEO_RECEIVED_QP_SUM"] = 72;
         return values;
     })();

@@ -145,6 +145,7 @@ import Message from './message/Message';
 import MessagingSession from './messagingsession/MessagingSession';
 import MessagingSessionConfiguration from './messagingsession/MessagingSessionConfiguration';
 import MessagingSessionObserver from './messagingsessionobserver/MessagingSessionObserver';
+import MetricReport from './clientmetricreport/MetricReport';
 import Modality from './modality/Modality';
 import MonitorTask from './task/MonitorTask';
 import MultiLogger from './logger/MultiLogger';
@@ -417,6 +418,7 @@ export {
   MessagingSession,
   MessagingSessionConfiguration,
   MessagingSessionObserver,
+  MetricReport,
   Modality,
   MonitorTask,
   MultiLogger,
